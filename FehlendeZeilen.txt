@@ -1,0 +1,19 @@
+🧩 Fehlende Werte pro Spalte:
+
+Produktname                 11464
+Artikelnummer                   0
+Kunde                         243
+Bedarfsmonat                    0
+Versandmonat                    0
+Prognosemonat 1             20303
+Prognosemonat 2             31190
+Tatsächliche Liefermenge     1506
+Prognosemenge 1                 0
+Prognosemenge 2                 0
+Verbrauchsanteil                0
+Kapazität                    1749
+Auslastung                   1749
+Produktionsvolumen           1749
+Abweichung Vorjahr              0
+Volumen gesamt                  0
+dtype: int64

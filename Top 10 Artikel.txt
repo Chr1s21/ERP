@@ -1,0 +1,12 @@
+🏆 Top 10 Artikel nach Liefermenge:
+      Artikelnummer            Produktname  Tatsächliche Liefermenge
+70    E000010004670       Terrassenplatten                10655748.0
+1696    R0144650990              Kaminöfen                 9857900.0
+4797    R2166800906      Werkzeugmaschinen                 9483512.0
+1226    R0107425982        Lacke & Lasuren                 9356624.0
+589     R0102332982            Bauelemente                 9101308.0
+5963    R2643400016        Lacke & Lasuren                 9031448.0
+3679    R2140208682     Befestigungswinkel                 8805852.0
+5885    R2640701050  Sicherheitsausrüstung                 8731268.0
+1635    R0131450998           Lichttechnik                 8637375.0
+1107    R0106346990       Pumpen & Zubehör                 8620278.0
