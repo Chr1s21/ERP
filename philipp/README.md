@@ -14,7 +14,7 @@
 
         1. In der Datei sind für jeden Monat für jeden Artikel die Ist und Soll Zahlen festgehalten.
 
-        2. Es gibt Teilgruppen für Jeden Artikel bzw. None 
+        2. Es gibt Teilgruppen für Jeden Artikel bzw. None (57)
 
         3. Kundengruppe sind die Einzelen Baumärkte
 
@@ -24,8 +24,8 @@
      - Analyse des Baumarktprogramms
      [! Säuelendiagramm Baumarktprogramm](./output/images/baumarktprogramm_jahresvergleich.png)
 
-     - Analyse auf Teilegruppen-Ebene
-     
+     - Analyse auf Baumarkt
+
 
 
 
