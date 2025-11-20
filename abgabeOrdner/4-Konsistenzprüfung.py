@@ -4,7 +4,7 @@ import os
 
 # --- KONFIGURATION ---
 FILE_FORECAST_FINAL = "./output/final/Final_Forecast_2026_2027.xlsx"
-FILE_PLAN = "output/agg_baumarktprogramm.xlsx"
+FILE_PLAN = "agg_baumarktprogramm.xlsx"
 
 def clean_keys(df, col_kunde='Kunde', col_monat='Monat'):
     """Stellt sicher, dass wir Text und Zahlen vergleichen können."""

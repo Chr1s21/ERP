@@ -6,7 +6,7 @@ import seaborn as sns
 
 # --- KONFIGURATION ---
 INPUT_FILE_ROHDATEN = "rohdaten.xlsx"
-INPUT_FILE_PLAN = "output/agg_baumarktprogramm.xlsx"
+INPUT_FILE_PLAN = "agg_baumarktprogramm.xlsx"
 OUTPUT_DIR = "./output/final"
 OUTPUT_FILE_EXCEL = "Final_Forecast_2026_2027.xlsx"
 
