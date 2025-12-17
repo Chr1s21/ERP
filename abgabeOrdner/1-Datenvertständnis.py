@@ -6,7 +6,7 @@ import numpy as np
 
 sns.set_theme(style="whitegrid")
 
-def load_data(filepath="rohdaten.xlsx"):
+def load_data(filepath="final.xlsx"):
     """
     Lädt die Excel-Rohdaten.
     """
@@ -46,20 +46,20 @@ def aggregate_data(data):
     # --- 1. Aggregation pro Baumarkt & Monat ---
     print("Aggregiere Daten pro Baumarkt und Monat...")
     df_baumarkt_agg = (
-        data.groupby(["Baumarkt", "bedmo_date"])
+        data.groupby(["werk", "bedmo_date"])
         .agg(agg_definition)
         .reset_index()
     )
-    df_baumarkt_agg = df_baumarkt_agg.sort_values(by=["Baumarkt", "bedmo_date"])
+    df_baumarkt_agg = df_baumarkt_agg.sort_values(by=["werk", "bedmo_date"])
     
     # --- 2. Aggregation pro Baumarktartikel & Monat ---
     print("Aggregiere Daten pro Baumarktartikel und Monat...")
     df_artikelgruppe_agg = (
-        data.groupby(["Baumarktartikel", "bedmo_date"])
+        data.groupby(["modulgruppen", "bedmo_date"])
         .agg(agg_definition)
         .reset_index()
     )
-    df_artikelgruppe_agg = df_artikelgruppe_agg.sort_values(by=["Baumarktartikel", "bedmo_date"])
+    df_artikelgruppe_agg = df_artikelgruppe_agg.sort_values(by=["modulgruppen", "bedmo_date"])
 
     print("Aggregation abgeschlossen.")
     return df_baumarkt_agg, df_artikelgruppe_agg
@@ -127,7 +127,7 @@ def plot_task_seasonality(df_artikelgruppe_agg, output_dir):
     
     # Berechne die Volatilität (Schwankung) für jede Gruppe
     # Wir nutzen den Variationskoeffizienten (Std / Mean)
-    df_volatility = df_artikelgruppe_agg.groupby('Baumarktartikel')['wavor_bstlmg'].agg(
+    df_volatility = df_artikelgruppe_agg.groupby('modulgruppen')['wavor_bstlmg'].agg(
         std_dev='std',
         mean_val='mean'
     ).reset_index()
@@ -138,17 +138,17 @@ def plot_task_seasonality(df_artikelgruppe_agg, output_dir):
     df_volatility = df_volatility[df_volatility['mean_val'] > 100] # Schwellenwert ggf. anpassen!
 
     # Finde die Top 5 Gruppen mit der höchsten Schwankung (CV)
-    top_volatile_groups = df_volatility.nlargest(5, 'cv')['Baumarktartikel']
+    top_volatile_groups = df_volatility.nlargest(5, 'cv')['modulgruppen']
 
-    df_top_groups = df_artikelgruppe_agg[df_artikelgruppe_agg['Baumarktartikel'].isin(top_volatile_groups)]
+    df_top_groups = df_artikelgruppe_agg[df_artikelgruppe_agg['modulgruppen'].isin(top_volatile_groups)]
 
     plt.figure(figsize=(12, 7))
     sns.lineplot(
         data=df_top_groups,
         x='bedmo_date',
         y='wavor_bstlmg',
-        hue='Baumarktartikel', 
-        style='Baumarktartikel', 
+        hue='modulgruppen', 
+        style='modulgruppen', 
         linewidth=2,
         markers=True
     )
@@ -171,14 +171,14 @@ def plot_task_outliers(df_baumarkt_smoothed, output_dir):
     print("Erstelle Plot: 3_Ausreisser_Glaettung.png")
     
     # Finde den Baumarkt mit den meisten Ausreißern als gutes Beispiel
-    outlier_counts = df_baumarkt_smoothed.groupby('Baumarkt')['is_outlier'].sum().nlargest(1)
+    outlier_counts = df_baumarkt_smoothed.groupby('werk')['is_outlier'].sum().nlargest(1)
     
     if outlier_counts.empty:
         print("Keine Ausreißer gefunden. Überspringe Plot.")
         return
         
     example_group_name = outlier_counts.index[0]
-    df_group = df_baumarkt_smoothed[df_baumarkt_smoothed['Baumarkt'] == example_group_name]
+    df_group = df_baumarkt_smoothed[df_baumarkt_smoothed['werk'] == example_group_name]
     
     
     df_plot = df_group.copy()
@@ -216,26 +216,26 @@ def plot_task_trends_per_baumarkt(df_baumarkt_agg, output_dir, top_n=10):
     """
     print(f"Erstelle Plot: 4_Top_{top_n}_Baumarkt_Trends.png")
     
-    top_baumaerkte = df_baumarkt_agg.groupby('Baumarkt')['wavor_bstlmg'].sum().nlargest(top_n).index
-    df_top_baumaerkte = df_baumarkt_agg[df_baumarkt_agg['Baumarkt'].isin(top_baumaerkte)]
+    top_baumaerkte = df_baumarkt_agg.groupby('werk')['wavor_bstlmg'].sum().nlargest(top_n).index
+    df_top_baumaerkte = df_baumarkt_agg[df_baumarkt_agg['werk'].isin(top_baumaerkte)]
     
     plt.figure(figsize=(12, 7))
     sns.lineplot(
         data=df_top_baumaerkte,
         x='bedmo_date',
         y='wavor_bstlmg',
-        hue='Baumarkt', 
-        style='Baumarkt', 
+        hue='werk', 
+        style='werk', 
         linewidth=2,
         markers=True
     )
     
     
     
-    plt.title(f'Analyse: Kunden-Trends (Top {top_n} Baumärkte)', fontsize=16)
+    plt.title(f'Analyse: Kunden-Trends (Top {top_n} Werke)', fontsize=16)
     plt.ylabel('Summiertes Bestellvolumen (wavor_bstlmg)')
     plt.xlabel('Monat')
-    plt.legend(title='Baumarkt', bbox_to_anchor=(1.02, 1), loc='upper left')
+    plt.legend(title='Werk', bbox_to_anchor=(1.02, 1), loc='upper left')
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"4_Top_{top_n}_Baumarkt_Trends.png"))
     plt.close()
@@ -258,9 +258,9 @@ def main():
     df_baumarkt_agg, df_artikelgruppe_agg = aggregate_data(data)
     
     # 3. Glättungs-Daten berechnen (Notwendig für den Ausreißer-Plot)
-    print("\nStarte Analyse & Glättung für 'Baumarkt'...")
+    print("\nStarte Analyse & Glättung für 'Werk'...")
     df_baumarkt_smoothed = (
-        df_baumarkt_agg.groupby('Baumarkt')
+        df_baumarkt_agg.groupby('werk')
         .apply(detect_and_smooth)
         .reset_index(drop=True)
     )
