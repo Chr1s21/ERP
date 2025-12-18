@@ -17,7 +17,7 @@ def load_rohdaten():
         pd.DataFrame: Rohdaten mit Bestellinformationen
     """
     try:
-        df_raw = pd.read_excel("rohdaten.xlsx")
+        df_raw = pd.read_excel("dieEchtenDaten.xlsb", engine="pyxlsb")
         print(
             f"✅ Rohdaten geladen: {df_raw.shape[0]} Zeilen, {df_raw.shape[1]} Spalten"
         )
@@ -39,21 +39,21 @@ def load_rohdaten():
 
 def load_baumarktprogramm():
     """
-    Lädt das Baumarktprogramm aus BAUMARKTPROGRAMM.xlsx
+    Lädt das Werkprogramm aus BAUMARKTPROGRAMM.xlsx
 
     Returns:
-        pd.DataFrame: Baumarktprogramm-Daten mit Prognosen
+        pd.DataFrame: Werkprogramm-Daten mit Prognosen
     """
     try:
-        df = pd.read_excel("BAUMARKTPROGRAMM.xlsx")
+        df = pd.read_excel("FAHRZEUGPROGRAMM.xlsx")
         print(
-            f"✅ Baumarktprogramm geladen: {df.shape[0]} Zeilen, {df.shape[1]} Spalten"
+            f"✅ Werkprogramm geladen: {df.shape[0]} Zeilen, {df.shape[1]} Spalten"
         )
 
         return df
 
     except FileNotFoundError:
-        print("❌ Datei 'BAUMARKTPROGRAMM.xlsx' nicht gefunden!")
+        print("❌ Datei 'FAHRZEUGPROGRAMM.xlsx' nicht gefunden!")
         print("🔍 Verfügbare Excel-Dateien:")
         for file in os.listdir("."):
             if file.endswith(".xlsx"):
@@ -61,7 +61,7 @@ def load_baumarktprogramm():
         return None
 
     except Exception as e:
-        print(f"❌ Fehler beim Laden des Baumarktprogramms: {e}")
+        print(f"❌ Fehler beim Laden des Werkprogramms: {e}")
         return None
 
 
@@ -74,12 +74,12 @@ def agg_Rohdaten(data):
 
     # Schritt 1: Normale Bestelldaten aggregieren
     bestelldaten_agg = (
-        data.groupby(["Baumarkt", "bedmo"]).agg({"wavor_bstlmg": "sum"}).reset_index()
+        data.groupby(["werk", "bedmo"]).agg({"wavor_bstlmg": "sum"}).reset_index()
     )
 
     # Schritt 2: Prognosedaten als zusätzliche 'bedmo' behandeln
     prognose1 = (
-        data.groupby(["Baumarkt", "progmo"])
+        data.groupby(["werk", "progmo"])
         .agg({"prog_mg1": "sum"})
         .reset_index()
         .copy()
@@ -89,7 +89,7 @@ def agg_Rohdaten(data):
     )
 
     prognose2 = (
-        data.groupby(["Baumarkt", "progmo2"])
+        data.groupby(["werk", "progmo2"])
         .agg({"prog_mg2": "sum"})
         .reset_index()
         .copy()
@@ -128,36 +128,36 @@ def agg_Rohdaten(data):
     combined = combined.dropna(subset=["bedmo"])
     combined["bedmo"] = combined["bedmo"].astype(int)
 
-    # Schritt 5: Bei doppelten Baumarkt/bedmo den größeren Wert nehmen
-    finale_daten = combined.groupby(["Baumarkt", "bedmo"], as_index=False).agg(
+    # Schritt 5: Bei doppelten Werk/bedmo den größeren Wert nehmen
+    finale_daten = combined.groupby(["werk", "bedmo"], as_index=False).agg(
         {"wavor_bstlmg": "max"}
     )
 
     # Schritt 6: Spalten umbenennen und sortieren
     finale_daten = finale_daten.rename(
-        columns={"bedmo": "Monat", "wavor_bstlmg": "Zahl", "Baumarkt": "Baumarkt"}
+        columns={"bedmo": "Monat", "wavor_bstlmg": "Zahl", "werk": "Werk"}
     )
-    finale_daten = finale_daten.sort_values(["Baumarkt", "Monat"]).reset_index(
+    finale_daten = finale_daten.sort_values(["Werk", "Monat"]).reset_index(
         drop=True
     )
 
     return finale_daten
 
 
-def agg_Baumarktprogramm(data):
+def agg_Werkprogramm(data):
     """
     Wandelt das BAUMARKTPROGRAMM-DataFrame in langes Format um:
-    Spalten: ['Baumarkt', 'Monat', 'Zahl']
+    Spalten: ['Werk', 'Monat', 'Zahl']
     Monat ist im Format JJJJMM (int). Fehlende Werte werden als 0 behandelt.
     Mapping der Spaltenbereiche:
       2025: E-P  (Index 4-15)
       2026: R-AC (Index 17-28)
       2027: AE-AP (Index 30-41)
       2028: AR-BC (Index 43-54)
-    Entfernt Zeilen, bei denen die Baumarkt-Spalte den Text "Baumarkt" enthält.
+    Entfernt Zeilen, bei denen die Werk-Spalte den Text "Werk" enthält.
     """
     if data is None or data.empty:
-        return pd.DataFrame(columns=["Baumarkt", "Monat", "Zahl"])
+        return pd.DataFrame(columns=["Werk", "Monat", "Zahl"])
 
     # Spaltenbereiche (Index)
     spalten_mapping = {
@@ -173,7 +173,7 @@ def agg_Baumarktprogramm(data):
         if pd.isna(baumarkt):
             continue
         bname = str(baumarkt).strip()
-        if bname == "" or bname.lower() == "baumarkt":
+        if bname == "" or bname.lower() == "werk":
             continue
         for jahr, indices in spalten_mapping.items():
             for m_idx in range(12):
@@ -192,39 +192,39 @@ def agg_Baumarktprogramm(data):
                             except Exception:
                                 wert = 0.0
                 monat_code = int(f"{jahr}{m_idx+1:02d}")
-                rows.append({"Baumarkt": bname, "Monat": monat_code, "Zahl": wert})
+                rows.append({"Werk": bname, "Monat": monat_code, "Zahl": wert})
 
-    result = pd.DataFrame(rows, columns=["Baumarkt", "Monat", "Zahl"])
-    # Falls mehrere Zeilen für gleichen Baumarkt/Monat existieren, zusammenfassen (Summe)
-    result = result.groupby(["Baumarkt", "Monat"], as_index=False).agg({"Zahl": "sum"})
+    result = pd.DataFrame(rows, columns=["Werk", "Monat", "Zahl"])
+    # Falls mehrere Zeilen für gleichen Werk/Monat existieren, zusammenfassen (Summe)
+    result = result.groupby(["Werk", "Monat"], as_index=False).agg({"Zahl": "sum"})
     # Entferne eventuelle verbleibende Zeilen mit dem Wort "baumarkt"
     result = result[
-        ~result["Baumarkt"].astype(str).str.strip().str.lower().eq("baumarkt")
+        ~result["Werk"].astype(str).str.strip().str.lower().eq("werk")
     ]
-    result = result.sort_values(["Baumarkt", "Monat"]).reset_index(drop=True)
+    result = result.sort_values(["Werk", "Monat"]).reset_index(drop=True)
     return result
 
 
 def plot_vergleich_baumarkt(rohdaten_agg, baumarkt_prog, out_dir="./output/images"):
     """
-    Vergleichsplots pro Baumarkt:
+    Vergleichsplots pro Werk:
     - Maßstab der Achsen ist angepasst
     """
     os.makedirs(out_dir, exist_ok=True)
 
     # Prüfung der benötigten Spalten
-    required = {"Baumarkt", "Monat", "Zahl"}
+    required = {"Werk", "Monat", "Zahl"}
     if not required.issubset(set(rohdaten_agg.columns)) or not required.issubset(
         set(baumarkt_prog.columns)
     ):
         raise ValueError(
-            "Beide DataFrames müssen die Spalten 'Baumarkt', 'Monat' und 'Zahl' enthalten."
+            "Beide DataFrames müssen die Spalten 'Werk', 'Monat' und 'Zahl' enthalten."
         )
 
     # Alle Baumärkte aus beiden DataFrames
     baumaerkte = sorted(
-        set(rohdaten_agg["Baumarkt"].dropna().unique()).union(
-            set(baumarkt_prog["Baumarkt"].dropna().unique())
+        set(rohdaten_agg["Werk"].dropna().unique()).union(
+            set(baumarkt_prog["Werk"].dropna().unique())
         )
     )
 
@@ -241,8 +241,8 @@ def plot_vergleich_baumarkt(rohdaten_agg, baumarkt_prog, out_dir="./output/image
         return result
 
     for bm in baumaerkte:
-        df_r = rohdaten_agg[rohdaten_agg["Baumarkt"] == bm][["Monat", "Zahl"]].copy()
-        df_p = baumarkt_prog[baumarkt_prog["Baumarkt"] == bm][["Monat", "Zahl"]].copy()
+        df_r = rohdaten_agg[rohdaten_agg["Werk"] == bm][["Monat", "Zahl"]].copy()
+        df_p = baumarkt_prog[baumarkt_prog["Werk"] == bm][["Monat", "Zahl"]].copy()
 
         if df_r.empty and df_p.empty:
             continue
@@ -319,7 +319,7 @@ def plot_vergleich_baumarkt(rohdaten_agg, baumarkt_prog, out_dir="./output/image
             ax.plot(
                 dates,
                 (series_p * factor).values,
-                label=f"Baumarktprogramm (skaliert)",
+                label=f"Werkprogramm (skaliert)",
                 color="C1",
                 linestyle="--",
                 marker="s",
@@ -327,7 +327,7 @@ def plot_vergleich_baumarkt(rohdaten_agg, baumarkt_prog, out_dir="./output/image
             )
 
         # Formatierung
-        ax.set_title(f"{bm} — Rohdaten vs. Baumarktprogramm")
+        ax.set_title(f"{bm} — Rohdaten vs. Werkprogramm")
         ax.set_xlabel("Monat")
         ax.set_ylabel("Zahl (Programm skaliert)")
         ax.xaxis.set_major_locator(mdates.AutoDateLocator())
@@ -363,8 +363,8 @@ def main():
     os.makedirs("./output", exist_ok=True)
     rohdaten_agg.to_excel("./output/agg_rohdaten.xlsx", index=False)
 
-    # Export des Baumarktprogramms im langen Format
-    baumarktProgamm_agg = agg_Baumarktprogramm(baumarktprogramm)
+    # Export des Werkprogramms im langen Format
+    baumarktProgamm_agg = agg_Werkprogramm(baumarktprogramm)
     baumarktProgamm_agg.to_excel("./output/agg_baumarktprogramm.xlsx", index=False)
 
     plot_vergleich_baumarkt(rohdaten_agg, baumarktProgamm_agg, out_dir="./output/plots/2")

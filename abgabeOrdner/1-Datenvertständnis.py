@@ -6,12 +6,12 @@ import numpy as np
 
 sns.set_theme(style="whitegrid")
 
-def load_data(filepath="final.xlsx"):
+def load_data(filepath="dieEchtenDaten.xlsb"):
     """
     Lädt die Excel-Rohdaten.
     """
     try:
-        df_raw = pd.read_excel(filepath)
+        df_raw = pd.read_excel(filepath, engine="pyxlsb")
         print(f"Datei '{filepath}' erfolgreich geladen: {df_raw.shape[0]} Zeilen, {df_raw.shape[1]} Spalten.")
         
         df_raw['bedmo_date'] = pd.to_datetime(df_raw['bedmo'], format='%Y%m')
