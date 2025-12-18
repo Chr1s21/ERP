@@ -26,7 +26,7 @@ def main():
     
     print("2. Lade ursprünglichen Vertriebsplan...")
     df_plan = pd.read_excel(FILE_PLAN)
-    df_plan = df_plan.rename(columns={'Baumarkt': 'Kunde', 'Zahl': 'Ziel_Summe'})
+    df_plan = df_plan.rename(columns={'Werk': 'Kunde', 'Zahl': 'Ziel_Summe'})
     
     # WICHTIG: Gleiche Skalierung wie in Schritt 3 anwenden!
     df_plan['Ziel_Summe'] = df_plan['Ziel_Summe'] * 1000
