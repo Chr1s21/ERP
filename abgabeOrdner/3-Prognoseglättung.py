@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # --- KONFIGURATION ---
-INPUT_FILE_ROHDATEN = "rohdaten.xlsx"
+INPUT_FILE_ROHDATEN = "dieEchtenDaten.xlsb"
 INPUT_FILE_PLAN = "agg_baumarktprogramm.xlsx"
 OUTPUT_DIR = "./output/final"
 OUTPUT_FILE_EXCEL = "Final_Forecast_2026_2027.xlsx"
@@ -18,7 +18,7 @@ sns.set_theme(style="whitegrid")
 # 1. HILFSFUNKTIONEN
 # ---------------------------------------------------------
 
-def clean_keys(df, col_kunde='Kunde', col_monat='Monat'):
+def clean_keys(df, col_kunde='Werk', col_monat='Monat'):
     """Bereinigt Schlüssel für sauberen Merge."""
     # Monat zu Int
     df[col_monat] = pd.to_numeric(df[col_monat], errors='coerce').fillna(0).astype(int)
@@ -49,15 +49,15 @@ def load_data():
         print(f"❌ Fehler: {INPUT_FILE_ROHDATEN} fehlt.")
         return pd.DataFrame(), pd.DataFrame()
         
-    df_raw = pd.read_excel(INPUT_FILE_ROHDATEN)
+    df_raw = pd.read_excel(INPUT_FILE_ROHDATEN, engine="pyxlsb")
     
     # Forecast zusammenbauen (Jahr 1 + 2)
     # Spaltennamen ggf. anpassen falls nötig
     try:
-        p1 = df_raw[['matnr', 'Baumarkt', 'Baumarktartikel', 'progmo', 'prog_mg1']].copy()
+        p1 = df_raw[['matnr', 'werk', 'modulgruppen', 'progmo', 'prog_mg1']].copy()
         p1.columns = ['Artikel', 'Kunde', 'Gruppe', 'Monat', 'Menge']
         
-        p2 = df_raw[['matnr', 'Baumarkt', 'Baumarktartikel', 'progmo2', 'prog_mg2']].copy()
+        p2 = df_raw[['matnr', 'werk', 'modulgruppen', 'progmo2', 'prog_mg2']].copy()
         p2.columns = ['Artikel', 'Kunde', 'Gruppe', 'Monat', 'Menge']
         
         df_forecast = pd.concat([p1, p2], ignore_index=True)
@@ -76,7 +76,7 @@ def load_data():
         return pd.DataFrame(), pd.DataFrame()
 
     df_plan = pd.read_excel(INPUT_FILE_PLAN)
-    df_plan = df_plan.rename(columns={'Baumarkt': 'Kunde', 'Zahl': 'Ziel_Summe'})
+    df_plan = df_plan.rename(columns={'werk': 'Kunde', 'Zahl': 'Ziel_Summe'})
     
     # --- KORREKTUR: Einheiten anpassen ---
     print("   ⚠️  Info: Skaliere Vertriebsplan (Tausend -> Stück) mit Faktor 1000.")
